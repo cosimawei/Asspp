@@ -13,8 +13,8 @@ struct ProductHistoryView: View {
     @State private var showErrorAlert = false
     @Environment(\.dismiss) var dismiss
 
-    init(vm: AppPackageArchive) {
-        _vm = StateObject(wrappedValue: vm)
+    init(accountID: String?, region: String, package: AppStore.AppPackage) {
+        _vm = StateObject(wrappedValue: AppPackageArchive(accountID: accountID, region: region, package: package))
     }
 
     var body: some View {

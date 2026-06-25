@@ -79,6 +79,9 @@ struct ProductView: View {
         .navigationDestination(for: PackageManifest.self) { manifest in
             PackageView(pkg: manifest)
         }
+        .navigationDestination(for: VersionHistoryDestination.self) { dest in
+            ProductHistoryView(accountID: dest.accountID, region: dest.region, package: dest.package)
+        }
         .navigationTitle("Select Account")
         .alert("License Required", isPresented: $showLicenseAlert) {
             var confirmRole: ButtonRole?
@@ -121,12 +124,10 @@ struct ProductView: View {
     var packageHeader: some View {
         Section {
             PackageDisplayView(archive: archive.package)
-            NavigationLink {
-                // Build the archive lazily: constructing it eagerly here runs
-                // two synchronous file reads + a JSON decode on every body
-                // evaluation, even before the user navigates.
-                LazyView(ProductHistoryView(vm: AppPackageArchive(accountID: selection, region: region, package: archive.package)))
-            } label: {
+            // Value-driven navigation: the destination is owned by the
+            // NavigationStack, so ProductView re-renders (Downloads changing)
+            // never rebuild the history view or its @StateObject archive.
+            NavigationLink(value: VersionHistoryDestination(accountID: selection, region: region, package: archive.package)) {
                 let badgeText = archive.releaseDate.flatMap { date in
                     Text(date.formatted(.relative(presentation: .numeric)))
                 }
@@ -259,6 +260,13 @@ extension AppStore.AppPackage {
         // TODO: assuming iPhone for now
         "iphone"
     }
+}
+
+// Stable, Hashable navigation value for the version-history destination.
+struct VersionHistoryDestination: Hashable {
+    let accountID: String?
+    let region: String
+    let package: AppStore.AppPackage
 }
 
 /// Defers building its content until the view is actually rendered, so an
