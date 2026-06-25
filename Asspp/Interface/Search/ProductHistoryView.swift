@@ -9,9 +9,13 @@ import ApplePackage
 import SwiftUI
 
 struct ProductHistoryView: View {
-    @ObservedObject var vm: AppPackageArchive
+    @StateObject private var vm: AppPackageArchive
     @State private var showErrorAlert = false
     @Environment(\.dismiss) var dismiss
+
+    init(vm: AppPackageArchive) {
+        _vm = StateObject(wrappedValue: vm)
+    }
 
     var body: some View {
         Form {

@@ -5,7 +5,7 @@
 
     @available(iOS, unavailable)
     struct InstalledListView: View {
-        @ObservedObject var vm = DeviceManager()
+        @StateObject private var vm = DeviceManager()
         @State private var isLoading = false
         @State private var pendingUpdates: [DeviceCTL.Device: Set<Software>] = [:]
 
