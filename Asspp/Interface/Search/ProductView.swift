@@ -79,9 +79,6 @@ struct ProductView: View {
         .navigationDestination(for: PackageManifest.self) { manifest in
             PackageView(pkg: manifest)
         }
-        .navigationDestination(for: VersionHistoryDestination.self) { dest in
-            ProductHistoryView(accountID: dest.accountID, region: dest.region, package: dest.package)
-        }
         .navigationTitle("Select Account")
         .alert("License Required", isPresented: $showLicenseAlert) {
             var confirmRole: ButtonRole?
@@ -124,10 +121,15 @@ struct ProductView: View {
     var packageHeader: some View {
         Section {
             PackageDisplayView(archive: archive.package)
-            // Value-driven navigation: the destination is owned by the
-            // NavigationStack, so ProductView re-renders (Downloads changing)
-            // never rebuild the history view or its @StateObject archive.
-            NavigationLink(value: VersionHistoryDestination(accountID: selection, region: region, package: archive.package)) {
+            // Inline destination WITHOUT LazyView: NavigationStack keeps the
+            // pushed ProductHistoryView alive, so its @StateObject archive is
+            // stable across ProductView re-renders. (LazyView's body re-runs
+            // build() on every parent re-render, recreating the view and
+            // resetting @StateObject -> the previous hang.) ProductHistoryView
+            // builds its own archive in @StateObject from these params.
+            NavigationLink {
+                ProductHistoryView(accountID: selection, region: region, package: archive.package)
+            } label: {
                 let badgeText = archive.releaseDate.flatMap { date in
                     Text(date.formatted(.relative(presentation: .numeric)))
                 }
@@ -261,14 +263,6 @@ extension AppStore.AppPackage {
         "iphone"
     }
 }
-
-// Stable, Hashable navigation value for the version-history destination.
-struct VersionHistoryDestination: Hashable {
-    let accountID: String?
-    let region: String
-    let package: AppStore.AppPackage
-}
-
 /// Defers building its content until the view is actually rendered, so an
 /// expensive destination is not constructed eagerly inside a NavigationLink.
 struct LazyView<Content: View>: View {
