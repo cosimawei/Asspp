@@ -128,7 +128,11 @@ class Installer: Identifiable, ObservableObject, @unchecked Sendable {
 
         var comps = URLComponents()
         comps.scheme = "http"
-        comps.host = "localhost"
+        // Use the loopback IP instead of "localhost": mobile Safari rewrites a
+        // bare "localhost" host into the public domain "localhost.com",
+        // navigating off-device and failing to fetch the CA cert. 127.0.0.1 is
+        // never rewritten and the server binds 0.0.0.0 (covers loopback).
+        comps.host = "127.0.0.1"
         comps.port = port
         comps.path = "/ca.crt"
         let url = comps.url!
